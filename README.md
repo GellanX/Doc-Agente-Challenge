@@ -4,7 +4,7 @@ Un agente interactivo de Inteligencia Artificial desarrollado con **Streamlit**,
 
 ![Preview de la Aplicación](assets/app_preview.png)
 
-> 🔗 **App en vivo:** https://tu-proyecto.streamlit.app *(Reemplazar con tu enlace real de Streamlit Cloud)*
+> 🔗 **App en vivo:** https://doc-agente-challenge-gellanx.streamlit.app/
 
 ---
 
