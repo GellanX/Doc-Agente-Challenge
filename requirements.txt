@@ -9,3 +9,4 @@ langchain-experimental
 faiss-cpu
 sentence-transformers
 pypdf
+tabulate
