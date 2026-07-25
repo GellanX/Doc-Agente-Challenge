@@ -1,0 +1,19 @@
+# Entornos Virtuales
+venv/
+ENV/
+env/
+.venv/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configuraciones de Streamlit y Secrets
+.streamlit/secrets.toml
+
+# Archivos temporales del SO o editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
