@@ -149,13 +149,14 @@ if uploaded_file:
         with st.expander("👁️ Vista previa de la tabla", expanded=False):
             st.dataframe(df.head(5), use_container_width=True)
 
+        # Reducimos max_iterations a 3 o 4 para evitar disparar el consumo de API
         pandas_agent = create_pandas_dataframe_agent(
             llm,
             df,
             agent_type="tool-calling",
-            verbose=True,
+            verbose=False, # Ponlo en False en producción para evitar prints ruidosos
             allow_dangerous_code=True,
-            max_iterations=7,
+            max_iterations=3, # Reducido de 7 a 3 para ahorrar peticiones a Gemini
             handle_parsing_errors=True
         )
 
@@ -163,24 +164,33 @@ if uploaded_file:
         if user_query:
             st.chat_message("user").write(user_query)
 
-            # Para el agente de Pandas construimos el prompt concatenando el contexto reciente
-            # (El agente opera mejor si le formateamos la conversación explícitamente en el prompt)
-            formatted_history = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in st.session_state.messages[-4:]])
-            query_with_context = f"Historial previo:\n{formatted_history}\n\nPregunta actual: {user_query}" if formatted_history else user_query
+            # Truncamos el historial a las últimas 2 interacciones (1 turno completo) para cuidar tokens
+            recent_messages = st.session_state.messages[-2:] if len(st.session_state.messages) >= 2 else []
+            formatted_history = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent_messages])
+            
+            query_with_context = (
+                f"Historial reciente:\n{formatted_history}\n\nPregunta actual: {user_query}" 
+                if formatted_history else user_query
+            )
 
             with st.spinner("Analizando datos..."):
                 try:
                     response = pandas_agent.invoke({"input": query_with_context})
-                    answer = response.get("output", "Sin respuesta.")
                     
+                    # Asegurar que extraemos sólo el texto de la respuesta
+                    answer = response.get("output", "")
+                    if isinstance(answer, dict) or isinstance(answer, list):
+                        # Si LangChain devuelve una estructura compleja, extraemos el texto
+                        answer = str(answer)
+
                     st.chat_message("assistant").write(answer)
                     
-                    # Guardar en session_state
+                    # Guardar en session_state solo el texto limpio
                     st.session_state.messages.append({"role": "user", "content": user_query})
                     st.session_state.messages.append({"role": "assistant", "content": answer})
 
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                        st.warning("⏳ Alcanzaste el límite de peticiones de Gemini. Espera unos segundos e intenta nuevamente.")
+                        st.warning("⏳ Alcanzaste el límite de peticiones de Gemini (15 RPM). Espera 15 segundos.")
                     else:
                         st.error(f"Error al procesar la consulta: {e}")
