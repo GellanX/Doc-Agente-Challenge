@@ -149,14 +149,14 @@ if uploaded_file:
         with st.expander("👁️ Vista previa de la tabla", expanded=False):
             st.dataframe(df.head(5), use_container_width=True)
 
-        # Reducimos max_iterations a 3 o 4 para evitar disparar el consumo de API
+        # Mantenemos max_iterations a 5 para evitar disparar el consumo de API
         pandas_agent = create_pandas_dataframe_agent(
             llm,
             df,
             agent_type="tool-calling",
-            verbose=False, # Ponlo en False en producción para evitar prints ruidosos
+            verbose=False,
             allow_dangerous_code=True,
-            max_iterations=3, # Reducido de 7 a 3 para ahorrar peticiones a Gemini
+            max_iterations=5,
             handle_parsing_errors=True
         )
 
@@ -168,9 +168,14 @@ if uploaded_file:
             recent_messages = st.session_state.messages[-2:] if len(st.session_state.messages) >= 2 else []
             formatted_history = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent_messages])
             
+            # Construimos el prefijo del historial solo si existe
+            history_prefix = f"Historial reciente:\n{formatted_history}\n\n" if formatted_history else ""
+
+            # Unimos todo de forma limpia
             query_with_context = (
-                f"Historial reciente:\n{formatted_history}\n\nPregunta actual: {user_query}" 
-                if formatted_history else user_query
+                f"{history_prefix}"
+                f"Pregunta actual: {user_query}\n"
+                f"Instrucción: Escribe y ejecuta directamente el código Python necesario para responder de forma concisa."
             )
 
             with st.spinner("Analizando datos..."):
