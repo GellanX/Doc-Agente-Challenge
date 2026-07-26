@@ -152,7 +152,7 @@ if uploaded_file:
         pandas_agent = create_pandas_dataframe_agent(
             llm,
             df,
-            agent_type="zero-shot-react-description",
+            agent_type="tool-calling",
             verbose=True,
             allow_dangerous_code=True,
             max_iterations=7,
