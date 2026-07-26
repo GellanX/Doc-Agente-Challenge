@@ -14,7 +14,6 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
-from langchain.agents import AgentType
 import pandas as pd
 
 # Configuración de la página
@@ -153,7 +152,7 @@ if uploaded_file:
         pandas_agent = create_pandas_dataframe_agent(
             llm,
             df,
-            agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            agent_type="zero-shot-react-description",
             verbose=True,
             allow_dangerous_code=True,
             max_iterations=7,
