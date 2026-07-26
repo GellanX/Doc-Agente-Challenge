@@ -154,7 +154,7 @@ if uploaded_file:
             df,
             verbose=False,
             allow_dangerous_code=True,
-            max_iterations=3,
+            max_iterations=7,
             handle_parsing_errors=True
         )
 
