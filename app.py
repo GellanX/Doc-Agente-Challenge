@@ -181,21 +181,33 @@ if uploaded_file:
             with st.spinner("Analizando datos..."):
                 try:
                     response = pandas_agent.invoke({"input": query_with_context})
-                    
-                    # Asegurar que extraemos sólo el texto de la respuesta
-                    answer = response.get("output", "")
-                    if isinstance(answer, dict) or isinstance(answer, list):
-                        # Si LangChain devuelve una estructura compleja, extraemos el texto
-                        answer = str(answer)
+                    raw_answer = response.get("output", "")
 
+                    # --- EXTRACCIÓN DE TEXTO LIMPIO ---
+                    if isinstance(raw_answer, list):
+                        # Recorremos la lista de bloques y extraemos el campo 'text' de cada uno
+                        extracted_texts = []
+                        for item in raw_answer:
+                            if isinstance(item, dict) and "text" in item:
+                                extracted_texts.append(item["text"])
+                            elif isinstance(item, str):
+                                extracted_texts.append(item)
+                        answer = "\n".join(extracted_texts) if extracted_texts else str(raw_answer)
+                    elif isinstance(raw_answer, dict) and "text" in raw_answer:
+                        answer = raw_answer["text"]
+                    else:
+                        answer = str(raw_answer)
+
+                    # Limpieza opcional: si el texto incluye bloques de código innecesarios,
+                    # mostramos solo la respuesta limpia
                     st.chat_message("assistant").write(answer)
                     
-                    # Guardar en session_state solo el texto limpio
+                    # Guardar en el historial de Streamlit
                     st.session_state.messages.append({"role": "user", "content": user_query})
                     st.session_state.messages.append({"role": "assistant", "content": answer})
 
                 except Exception as e:
                     if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                        st.warning("⏳ Alcanzaste el límite de peticiones de Gemini (15 RPM). Espera 15 segundos.")
+                        st.warning("⏳ Alcanzaste el límite de peticiones de Gemini (15 RPM). Espera unos 15 segundos.")
                     else:
                         st.error(f"Error al procesar la consulta: {e}")
